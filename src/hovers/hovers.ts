@@ -171,6 +171,7 @@ export namespace Hovers {
 			dateFormat: dateFormat,
 			line: editorLine,
 			markdown: true,
+			messageAutolinks: Container.config.hovers.autolinks.enabled,
 			pullRequestOrRemote: pr,
 			presence: presence,
 			previousLineDiffUris: previousLineDiffUris,
@@ -208,8 +209,8 @@ export namespace Hovers {
 			return undefined;
 		}
 
-		const remote = remotes.find(r => r.default && r.provider != null);
-		if (remote === undefined) {
+		const remote = await Container.git.getRemoteWithApiProvider(remotes);
+		if (remote?.provider == null) {
 			Logger.debug(cc, `completed ${GlyphChars.Dot} ${Strings.getDurationMilliseconds(start)} ms`);
 
 			return undefined;
@@ -219,9 +220,7 @@ export namespace Hovers {
 		const timeout = 250;
 
 		try {
-			const autolinks = await Container.autolinks.getIssueOrPullRequestLinks(message, remote, {
-				timeout: timeout,
-			});
+			const autolinks = await Container.autolinks.getIssueOrPullRequestLinks(message, remote, { timeout: timeout });
 
 			if (autolinks !== undefined && (Logger.level === TraceLevel.Debug || Logger.isDebugging)) {
 				const timeouts = [
@@ -277,8 +276,8 @@ export namespace Hovers {
 			return undefined;
 		}
 
-		const remote = remotes.find(r => r.default && r.provider != null);
-		if (!remote?.provider?.hasApi()) {
+		const remote = await Container.git.getRemoteWithApiProvider(remotes, { includeDisconnected: true });
+		if (remote?.provider == null) {
 			Logger.debug(cc, `completed ${GlyphChars.Dot} ${Strings.getDurationMilliseconds(start)} ms`);
 
 			return undefined;
