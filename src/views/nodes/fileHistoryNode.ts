@@ -1,5 +1,5 @@
 'use strict';
-import { Disposable, ThemeIcon, TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { Disposable, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { Container } from '../../container';
 import {
 	GitCommitType,
@@ -41,17 +41,17 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 	async getChildren(): Promise<ViewNode[]> {
 		const children: ViewNode[] = [];
 
-		if (this.uri.sha === undefined) {
+		if (this.uri.sha == null) {
 			const status = await Container.git.getStatusForFile(this.uri.repoPath!, this.uri.fsPath);
-			if (status?.workingTreeStatus !== undefined || status?.indexStatus !== undefined) {
+			if (status?.workingTreeStatus != null || status?.indexStatus != null) {
 				const user = await Container.git.getCurrentUser(this.uri.repoPath!);
-				if (status.workingTreeStatus !== undefined && status.indexStatus !== undefined) {
+				if (status.workingTreeStatus != null && status.indexStatus != null) {
 					let commit = new GitLogCommit(
 						GitCommitType.LogFile,
 						this.uri.repoPath!,
 						GitRevision.uncommitted,
 						'You',
-						user !== undefined ? user.email : undefined,
+						user != null ? user.email : undefined,
 						new Date(),
 						new Date(),
 						'',
@@ -75,7 +75,7 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 						this.uri.repoPath!,
 						GitRevision.uncommittedStaged,
 						'You',
-						user !== undefined ? user.email : undefined,
+						user != null ? user.email : undefined,
 						new Date(),
 						new Date(),
 						'',
@@ -97,11 +97,9 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 					const commit = new GitLogCommit(
 						GitCommitType.LogFile,
 						this.uri.repoPath!,
-						status.workingTreeStatus !== undefined
-							? GitRevision.uncommitted
-							: GitRevision.uncommittedStaged,
+						status.workingTreeStatus != null ? GitRevision.uncommitted : GitRevision.uncommittedStaged,
 						'You',
-						user !== undefined ? user.email : undefined,
+						user != null ? user.email : undefined,
 						new Date(),
 						new Date(),
 						'',
@@ -123,7 +121,7 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 		}
 
 		const log = await this.getLog();
-		if (log !== undefined) {
+		if (log != null) {
 			children.push(
 				...insertDateMarkers(
 					Iterables.map(
@@ -158,9 +156,8 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 		);
 		item.contextValue = ResourceType.FileHistory;
 		item.description = this.uri.directory;
-		item.iconPath = new ThemeIcon('history');
 		item.tooltip = `History of ${this.uri.fileName}\n${this.uri.directory}/${
-			this.uri.sha === undefined ? '' : `\n\n${this.uri.sha}`
+			this.uri.sha == null ? '' : `\n\n${this.uri.sha}`
 		}`;
 
 		void this.ensureSubscription();
@@ -171,7 +168,7 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 	@debug()
 	protected async subscribe() {
 		const repo = await Container.git.getRepository(this.uri);
-		if (repo === undefined) return undefined;
+		if (repo == null) return undefined;
 
 		const subscription = Disposable.from(
 			repo.onDidChange(this.onRepoChanged, this),
@@ -212,7 +209,7 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 
 	private _log: GitLog | undefined;
 	private async getLog() {
-		if (this._log === undefined) {
+		if (this._log == null) {
 			this._log = await Container.git.getLogForFile(this.uri.repoPath, this.uri.fsPath, {
 				limit: this.limit ?? this.view.config.defaultItemLimit,
 				ref: this.uri.sha,
@@ -229,7 +226,7 @@ export class FileHistoryNode extends SubscribeableViewNode implements PageableVi
 	limit: number | undefined = this.view.getNodeLastKnownLimit(this);
 	async showMore(limit?: number | { until?: any }) {
 		let log = await this.getLog();
-		if (log === undefined || !log.hasMore) return;
+		if (log == null || !log.hasMore) return;
 
 		log = await log.more?.(limit ?? this.view.config.pageItemLimit);
 		if (this._log === log) return;
